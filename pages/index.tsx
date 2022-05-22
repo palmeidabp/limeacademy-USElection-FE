@@ -1,11 +1,12 @@
 import { useWeb3React } from "@web3-react/core";
 import Head from "next/head";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Account from "../components/Account";
 import NativeCurrencyBalance from "../components/NativeCurrencyBalance";
 import TokenBalance from "../components/TokenBalance";
-import USLibrary from "../components/USLibrary";
-import { ALBT_TOKEN_ADDRESS, US_ELECTION_ADDRESS } from "../constants";
+import BookStoreLibrary from "../components/BookStore";
+import { ALBT_TOKEN_ADDRESS, BOOK_STORE_ADDRESS } from "../constants";
 import useEagerConnect from "../hooks/useEagerConnect";
 
 function Home() {
@@ -14,6 +15,23 @@ function Home() {
   const triedToEagerConnect = useEagerConnect();
 
   const isConnected = typeof account === "string" && !!library;
+
+  const [chainId, setChainId] = useState<number>(0);
+
+  useEffect(() => {
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", (ev) => {
+        setChainId(0);
+        setChainId(parseInt(ev));
+      });
+    }
+    if (!!library) {
+      library.getNetwork().then((net) => {
+        console.log(net);
+        setChainId(net.chainId);
+      });
+    }
+  }, [isConnected]);
 
   return (
     <div>
@@ -40,12 +58,11 @@ function Home() {
           </a>
         </h1>
 
-        {isConnected && (
+        {isConnected && chainId > 0 && (
           <section>
             <NativeCurrencyBalance />
-
             <TokenBalance tokenAddress={ALBT_TOKEN_ADDRESS} symbol="ALBT" />
-            <USLibrary contractAddress={US_ELECTION_ADDRESS} />
+            <BookStoreLibrary chainId={chainId} />
           </section>
         )}
       </main>
